@@ -1,5 +1,5 @@
-import cors from "cors";
 import express from "express";
+import cors from "cors";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 
@@ -11,15 +11,19 @@ dotenv.config();
 
 const app = express();
 
-// ✅ CORS setup for local + render
-app.use(cors({
-  origin: [
-    "http://localhost:5173",
-    "https://linkedin-frontend-vjnh.onrender.com"
-  ],
-  credentials: true,
-}));
+// ✅ CORS Setup for Local + Render Frontend
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", // for local Vite dev
+      "https://linkedin-frontend-vjnh.onrender.com", // ✅ your Render frontend URL
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true,
+  })
+);
 
+// ✅ Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -28,16 +32,23 @@ app.use("/uploads", express.static("uploads"));
 
 // ✅ MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI)
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ DB Error:", err));
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
 // ✅ Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/users", userRoutes);
 
-// ✅ Start server
+// ✅ Test Route
+app.get("/", (req, res) => {
+  res.send("✅ Backend is live and running on Render!");
+});
+
+// ✅ Server Start
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
- 
