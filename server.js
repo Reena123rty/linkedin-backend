@@ -8,35 +8,41 @@ import postRoutes from "./routes/postRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 
 dotenv.config();
-
 const app = express();
 
-// ✅ Universal Render-compatible CORS fix
-app.use((req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "https://linkedin-frontend-vjnh.onrender.com"); // frontend Render URL
-  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-  res.header("Access-Control-Allow-Credentials", "true");
-  if (req.method === "OPTIONS") return res.sendStatus(200);
-  next();
-});
+// ✅ Step 1: Allowed Origin EXACT match
+const allowedOrigin = "https://linkedin-frontend-vjnh.onrender.com";
+
+app.use(
+  cors({
+    origin: allowedOrigin, // ✅ exact frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
+// ✅ Step 2: Handle Preflight OPTIONS requests manually (important for Render)
+app.options("*", cors({ origin: allowedOrigin }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/uploads", express.static("uploads"));
 
+// ✅ MongoDB connection
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.error("❌ DB Error:", err));
 
+// ✅ Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/posts", postRoutes);
 app.use("/api/users", userRoutes);
 
 app.get("/", (req, res) => {
-  res.send("✅ Backend is live with full CORS fix!");
+  res.send("✅ CORS fixed! Backend live on Render!");
 });
 
 const PORT = process.env.PORT || 5000;
